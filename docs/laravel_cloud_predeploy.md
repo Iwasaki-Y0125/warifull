@@ -29,6 +29,13 @@ git push -u origin main
 
 不足がある時だけ `Custom environment variables` に追加。
 
+HTTP Basic認証を使う場合は、`Custom environment variables` に以下も追加する。
+
+- `MIDDLEWARE_AUTH_ENABLED=true`
+- `MIDDLEWARE_AUTH_USER=<demo_user>`
+- `MIDDLEWARE_AUTH_PASSWORD=<demo_password>`
+- `MIDDLEWARE_AUTH_REALM="Warifull Demo"`
+
 ## 4. デプロイ
 
 - `Deploy` 実行

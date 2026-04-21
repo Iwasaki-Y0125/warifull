@@ -42,9 +42,7 @@ erDiagram
         bigint   id             PK "通常担当レコードID"
         bigint   weekly_task_id FK "対象の週次業務ID"
         bigint   member_id      FK "通常担当メンバーID"
-        tinyint  priority          "担当優先度(1=主担当,2=サブ担当)"
-        date     effective_from    "担当開始日"
-        date     effective_to      "担当終了日(NULLで現行)"
+        string   role              "担当種別(main/sub)"
         datetime created_at        "作成日時"
         datetime updated_at        "更新日時"
     }
@@ -55,7 +53,7 @@ erDiagram
         bigint   weekly_task_id       FK "振替対象の週次業務ID"
         bigint   original_member_id   FK "元担当メンバーID"
         bigint   substitute_member_id FK "振替担当メンバーID"
-        string   status                  "proposed/confirmed/cancelled"
+        string   status                  "pending/assigned"
         datetime created_at              "作成日時"
         datetime updated_at              "更新日時"
     }
@@ -76,7 +74,9 @@ erDiagram
 
 ## 設計メモ（MVP）
 - 通常担当は `weekly_task_owners`、振替担当は `task_substitutions` に分離。
-- `weekly_task_owners.priority` は主担当/副担当の順序表現に利用可能（単一担当なら固定値で運用）。
-- `task_substitutions.status` は `proposed` / `confirmed` などを想定。
+- `weekly_task_owners.role` は `main/sub` で担当種別を表現し、1タスクに複数担当を持てる前提で運用。
+- `task_substitutions.status` は `pending/assigned` の2値で運用し、初期値は `pending`。
 - 候補提案は都度計算し、MVPでは `reassignment_suggestions` テーブルは持たない。
 - `member_task_skills.skill_level` は要件に合わせて `0-3` を使用。
+- `weekly_tasks.weekday` は MVP では `1..5`（月〜金）固定で扱う。
+- 主目的は現時点の割り振り管理のため、履歴管理（`softDeletes` や期間履歴カラム）はMVPでは持たない。

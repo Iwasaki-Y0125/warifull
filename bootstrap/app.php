@@ -11,7 +11,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'middleware.auth' => \App\Http\Middleware\MiddlewareAuth::class,
+        ]);
+
+        $middleware->web(append: [
+            \App\Http\Middleware\MiddlewareAuth::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

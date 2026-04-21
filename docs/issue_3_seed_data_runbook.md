@@ -100,6 +100,20 @@ php artisan db:seed --class=Database\\Seeders\\DemoDataSeeder --force
 - `--force` を付けると production 環境でも確認プロンプトなしで実行できる。
 - 既存データに影響が出ないよう、Seeder側は `updateOrCreate` で冪等性を持たせる。
 
+トラブルシュート:
+- 症状:
+  - `The "--force\r" option does not exist.` でデプロイが失敗する
+- 原因:
+  - Deploy commands に貼り付けた行末へ `\r` が混入し、`--force` が別オプションとして解釈される
+- 対処:
+  - 行を手入力で作り直す
+  - または、`--force` を行末に置かないようコメントを付ける
+
+```bash
+php artisan migrate --force # deploy
+php artisan db:seed --class=Database\\Seeders\\DemoDataSeeder --force # deploy
+```
+
 ## 4-6. テストを追加
 Seed投入の回帰防止として、最小のFeatureテストを追加する。
 

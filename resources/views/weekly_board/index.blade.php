@@ -6,9 +6,7 @@
 
         <title>ワリフル | 週次業務ボード</title>
 
-        @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-            @vite(['resources/css/app.css', 'resources/js/app.js'])
-        @endif
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="min-h-screen bg-[#f3f5f9] text-slate-900">
         @php

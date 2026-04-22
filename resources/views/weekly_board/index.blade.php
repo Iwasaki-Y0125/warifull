@@ -14,6 +14,10 @@
             $orderedWeekdays = [1, 2, 3, 4, 5];
             $weekdayTabs = $weekdayTabs ?? [];
             $activeWeekday = $activeWeekday ?? 1;
+            $selectedDate = $selectedDate ?? now();
+            $selectedDateTasks = $selectedDateTasks ?? collect();
+            $previousWeekDate = $previousWeekDate ?? now()->subWeek()->toDateString();
+            $nextWeekDate = $nextWeekDate ?? now()->addWeek()->toDateString();
             $vacationUpdateRouteTemplate = route('members.vacations.update', ['member' => '__MEMBER__']);
         @endphp
 
@@ -71,13 +75,13 @@
 
             <section class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center gap-3">
-                    <button
-                        type="button"
+                    <a
+                        href="{{ route('weekly-board.index', ['date' => $previousWeekDate]) }}"
                         class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-slate-300 bg-white text-3xl text-slate-500 shadow-sm"
-                        disabled
+                        aria-label="前の週へ移動"
                     >
                         ‹
-                    </button>
+                    </a>
 
                     <div class="grid flex-1 grid-cols-5 gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-inner">
                         @foreach ($orderedWeekdays as $weekday)
@@ -85,59 +89,58 @@
                                 $isActive = $activeWeekday === $weekday;
                                 $weekdayLabel = $weekdayTabs[$weekday]['label'] ?? '';
                                 $weekdayDate = $weekdayTabs[$weekday]['date'] ?? '';
+                                $weekdayRawDate = $weekdayTabs[$weekday]['raw_date'] ?? '';
                             @endphp
 
-                            <div class="{{ $isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700' }} rounded-xl px-3 py-2 text-center">
+                            <a
+                                href="{{ route('weekly-board.index', ['date' => $weekdayRawDate]) }}"
+                                class="{{ $isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100' }} block rounded-xl px-3 py-2 text-center"
+                                @if ($isActive) aria-current="page" @endif
+                            >
                                 <p class="text-sm font-semibold {{ $isActive ? 'text-blue-100' : 'text-slate-500' }}">{{ $weekdayLabel }}</p>
                                 <p class="mt-1 text-2xl font-bold">{{ $weekdayDate }}</p>
-                            </div>
+                            </a>
                         @endforeach
                     </div>
 
-                    <button
-                        type="button"
+                    <a
+                        href="{{ route('weekly-board.index', ['date' => $nextWeekDate]) }}"
                         class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-slate-300 bg-white text-3xl text-slate-500 shadow-sm"
-                        disabled
+                        aria-label="次の週へ移動"
                     >
                         ›
-                    </button>
+                    </a>
                 </div>
 
                 <div class="space-y-5">
-                    @foreach ($orderedWeekdays as $weekday)
-                        @php
-                            $tasks = $weeklyTasksByWeekday->get($weekday, collect());
-                        @endphp
+                    <section>
+                        <h3 class="mb-2 text-sm font-semibold text-slate-500">
+                            {{ $selectedDate->format('n/j') }}（{{ $weekdayTabs[$activeWeekday]['label'] ?? '' }}）
+                        </h3>
 
-                        <section>
-                            <h3 class="mb-2 text-sm font-semibold text-slate-500">
-                                {{ $weekdayTabs[$weekday]['label'] ?? '' }}曜日
-                            </h3>
+                        <div class="space-y-3">
+                            @forelse ($selectedDateTasks as $task)
+                                <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                                    <p class="text-lg font-semibold">{{ $task['name'] }}</p>
+                                    <p class="mt-1 text-sm text-slate-600">{{ $task['description'] }}</p>
 
-                            <div class="space-y-3">
-                                @forelse ($tasks as $task)
-                                    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                        <p class="text-lg font-semibold">{{ $task['name'] }}</p>
-                                        <p class="mt-1 text-sm text-slate-600">{{ $task['description'] }}</p>
-
-                                        <div class="mt-4 flex items-center justify-between gap-3">
-                                            <div class="grid gap-1 text-sm text-slate-700">
-                                                <p>開始時刻: {{ \Illuminate\Support\Str::of($task['start_time'])->substr(0, 5) }}</p>
-                                            </div>
-                                            <div class="inline-flex min-h-16 items-center gap-4 rounded-2xl bg-blue-50 px-4 py-4 text-lg font-semibold leading-relaxed text-blue-900 whitespace-nowrap">
-                                                <span class="text-lg leading-none">🧑‍💼</span>
-                                                <span>{{ $task['main_owner_name'] ?? '未設定' }}</span>
-                                            </div>
+                                    <div class="mt-4 flex items-center justify-between gap-3">
+                                        <div class="grid gap-1 text-sm text-slate-700">
+                                            <p>開始時刻: {{ \Illuminate\Support\Str::of($task['start_time'])->substr(0, 5) }}</p>
                                         </div>
-                                    </article>
-                                @empty
-                                    <p class="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">
-                                        この曜日のタスクはありません。
-                                    </p>
-                                @endforelse
-                            </div>
-                        </section>
-                    @endforeach
+                                        <div class="inline-flex min-h-16 items-center gap-4 rounded-2xl bg-blue-50 px-4 py-4 text-lg font-semibold leading-relaxed text-blue-900 whitespace-nowrap">
+                                            <span class="text-lg leading-none">🧑‍💼</span>
+                                            <span>{{ $task['main_owner_name'] ?? '未設定' }}</span>
+                                        </div>
+                                    </div>
+                                </article>
+                            @empty
+                                <p class="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">
+                                    この日のタスクはありません。
+                                </p>
+                            @endforelse
+                        </div>
+                    </section>
                 </div>
             </section>
         </main>

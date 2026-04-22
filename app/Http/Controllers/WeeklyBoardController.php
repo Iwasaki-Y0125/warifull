@@ -6,17 +6,21 @@ use App\Enums\WeeklyTaskOwnerRole;
 use App\Models\Member;
 use App\Models\WeeklyTask;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
 class WeeklyBoardController extends Controller
 {
     /**
      * トップの週次ボード表示用データを組み立てて返す。
+     * dateクエリ（Y-m-d）を起点に、選択日の曜日タスクのみを表示する。
      */
-    public function __invoke(): View
+    public function __invoke(Request $request): View
     {
         $today = now()->toDateString();
-        $weekStart = Carbon::today()->startOfWeek(Carbon::MONDAY);
+        $selectedDate = $this->resolveSelectedDate($request);
+        $weekStart = $selectedDate->copy()->startOfWeek(Carbon::MONDAY);
+        $activeWeekday = $selectedDate->dayOfWeekIso;
 
         // 上部タブ用に、今週の月〜金の日付を m/d 形式で作る。
         $weekdayTabs = collect(range(1, 5))
@@ -33,15 +37,11 @@ class WeeklyBoardController extends Controller
                             5 => '金',
                         },
                         'date' => $date->format('n/j'),
+                        'raw_date' => $date->toDateString(),
                     ],
                 ];
             })
             ->all();
-
-        $activeWeekday = Carbon::today()->dayOfWeekIso;
-        if ($activeWeekday < 1 || $activeWeekday > 5) {
-            $activeWeekday = 1;
-        }
 
         // メンバー一覧を取得し、今日以降の有給予定を直近3件（m/d形式）へ整形する。
         $members = Member::query()
@@ -105,9 +105,48 @@ class WeeklyBoardController extends Controller
         // Bladeで曜日ヘッダーと曜日別タスク一覧を描画するためのデータを渡す。
         return view('weekly_board.index', [
             'weekdayTabs' => $weekdayTabs,
+            'selectedDate' => $selectedDate,
             'activeWeekday' => $activeWeekday,
             'members' => $members,
-            'weeklyTasksByWeekday' => $weeklyTasks,
+            'selectedDateTasks' => $weeklyTasks->get($activeWeekday, collect()),
+            'previousWeekDate' => $selectedDate->copy()->subWeek()->toDateString(),
+            'nextWeekDate' => $selectedDate->copy()->addWeek()->toDateString(),
         ]);
+    }
+
+    /**
+     * クエリのdate値から表示対象日を解決する。
+     * 不正値または未指定時は今日を基準にし、土日は当該週の月曜へ正規化する。
+     */
+    private function resolveSelectedDate(Request $request): Carbon
+    {
+        $queryDate = $request->query('date');
+
+        if (is_string($queryDate)) {
+            try {
+                $parsedDate = Carbon::createFromFormat('Y-m-d', $queryDate)->startOfDay();
+                if ($parsedDate->format('Y-m-d') === $queryDate) {
+                    return $this->normalizeToBusinessDay($parsedDate);
+                }
+            } catch (\Throwable) {
+                // フォーマット不正時はデフォルト日へフォールバックする。
+            }
+        }
+
+        return $this->normalizeToBusinessDay(Carbon::today());
+    }
+
+    /**
+     * 週次ボードの表示対象を平日（月〜金）に正規化する。
+     */
+    private function normalizeToBusinessDay(Carbon $date): Carbon
+    {
+        $normalizedDate = $date->copy();
+
+        if ($normalizedDate->isWeekend()) {
+            return $normalizedDate->startOfWeek(Carbon::MONDAY);
+        }
+
+        return $normalizedDate;
     }
 }

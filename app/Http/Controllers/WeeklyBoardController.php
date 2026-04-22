@@ -67,6 +67,13 @@ class WeeklyBoardController extends Controller
                     'id' => $member->id,
                     'name' => $member->name,
                     'upcoming_vacation_dates' => $upcomingVacationDates,
+                    'editable_vacation_dates' => $member->vacations
+                        ->where('vacation_date', '>=', $today)
+                        ->map(
+                            fn ($vacationDate): string => Carbon::parse($vacationDate->vacation_date)->format('Y-m-d')
+                        )
+                        ->values()
+                        ->all(),
                 ];
             });
 

@@ -1,58 +1,84 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ワリフル（デモ版）
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+休暇時の週次業務再割当ツールのMVPです。  
+企画書: `docs/warifull_mvp_proposal.md`
 
-## About Laravel
+## 解決したい課題
+週次の業務が属人化している職場では、  
+**「この曜日は週次の業務があるから休みづらいな」**  
+**「代わりを誰かに頼むのも申し訳ないな」**  
+といった状況が起こりがち。
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+その結果、担当者は希望の休みを取りづらくなり、  
+管理者にとっても割り振り判断が負担に。
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+ワリフルは、週次業務と担当者を可視化し、  
+**休暇登録時に『代替担当候補を自動で提案』することで、**  
+属人化の緩和とタスクの割り振りを支援するツールです。
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## プロダクト概要
+- メンバーの有給休暇時に、週次業務の担当状況を可視化する業務支援ツール
+- 進捗は「週次ボード表示」と「有給登録」のMVP機能を中心に実装済み
 
-## Learning Laravel
+## 実装状況（企画書ベース）
+最終更新: 2026-04-22
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| 企画書の機能 | 状態 | 現在の実装内容 |
+|---|---|---|
+| メンバー管理 | 一部実装 | メンバー表示は実装済み。登録・編集・削除UIは未実装 |
+| 週次業務管理 | 一部実装 | 週次業務表示は実装済み。登録・編集・削除UIは未実装 |
+| スキルレベル管理 | 一部実装 | テーブル/モデル/Seederは実装済み。管理UIと運用ロジックは未実装 |
+| 週次表示 | 実装済み（MVP範囲） | `/` で月〜金表示、日付タブ選択、選択日タスクのみ表示、週移動（前週/翌週） |
+| 休暇登録 | 実装済み（MVP範囲） | メンバーごとの有給追加モーダル、複数日選択、今日以降の有給同期更新 |
+| 代替担当候補の自動提案 | 未実装 | ルールベース自動選定ロジックは未着手 |
+| 再割当結果表示画面 | 未実装 | 一覧表示画面は未着手 |
+| デモ用サンプルデータ表示 | 実装済み | `DemoDataSeeder` でメンバー・週次業務・スキル・有給・振替サンプルを投入 |
+| デプロイ | 準備済み | 手順書あり。README時点で「完了状態」は未記載 |
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 現在できるデモ
+- 週次ボードの表示
+- 日付タブの選択による当日タスク表示
+- 週移動
+- メンバー別の有給登録・更新
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## これから実装する部分
+- 代替担当候補の自動提案ロジック
+- 再割当結果表示画面
+- メンバー管理画面の登録・編集・削除
+- 週次業務管理画面の登録・編集・削除
+- スキルレベル管理UI
 
-## Agentic Development
+## 主なルート
+- `GET /` : 週次ボード表示
+- `PUT /members/{member}/vacations` : 有給更新
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## 開発環境
+- PHP 8.5
+- Laravel 13
+- PostgreSQL
+- Laravel Sail
+- PHPUnit
 
+## セットアップ
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+vendor/bin/sail up -d
+vendor/bin/sail composer install
+vendor/bin/sail artisan migrate --seed
+vendor/bin/sail npm install
+vendor/bin/sail npm run dev
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## テスト
+```bash
+make test-all
+# or
+vendor/bin/sail artisan test --compact
+```
 
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 関連ドキュメント
+- 企画書: `docs/warifull_mvp_proposal.md`
+- ER図: `docs/warifull_er_diagram.md`
+- 週次画面実装手順: `docs/issue_4_weekly_board_runbook.md`
+- 有給モーダル実装手順: `docs/issue_5_vacations_modal_runbook.md`
+- 日付タブ絞り込み実装手順: `docs/issue_19_weekday_filter_runbook.md`
+- デプロイ準備: `docs/laravel_setup_and_predeploy.md`, `docs/laravel_cloud_predeploy.md`

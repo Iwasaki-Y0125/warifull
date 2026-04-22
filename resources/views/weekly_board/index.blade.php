@@ -14,6 +14,7 @@
             $orderedWeekdays = [1, 2, 3, 4, 5];
             $weekdayTabs = $weekdayTabs ?? [];
             $activeWeekday = $activeWeekday ?? 1;
+            $vacationUpdateRouteTemplate = route('members.vacations.update', ['member' => '__MEMBER__']);
         @endphp
 
         <header class="border-b border-slate-200 bg-white px-6 py-4">
@@ -27,6 +28,12 @@
         </header>
 
         <main class="mx-auto grid max-w-7xl grid-cols-1 gap-6 p-6 lg:grid-cols-[290px_1fr]">
+            @if (session('status'))
+                <div class="lg:col-span-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    {{ session('status') }}
+                </div>
+            @endif
+
             <aside class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <h2 class="text-lg font-semibold">チームメンバー</h2>
 
@@ -42,6 +49,17 @@
                                 直近の有給予定:
                                 {{ ! empty($member['upcoming_vacation_dates']) ? implode(', ', $member['upcoming_vacation_dates']) : 'なし' }}
                             </p>
+                            <div class="mt-3 flex justify-end">
+                                <button
+                                    type="button"
+                                    class="js-open-vacation-modal inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                    data-member-id="{{ $member['id'] }}"
+                                    data-member-name="{{ $member['name'] }}"
+                                    data-vacation-dates='@json($member["editable_vacation_dates"] ?? [])'
+                                >
+                                    ＞ 有給追加
+                                </button>
+                            </div>
                         </article>
                     @empty
                         <p class="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
@@ -123,5 +141,7 @@
                 </div>
             </section>
         </main>
+
+        @include('weekly_board._vacation_modal', ['vacationUpdateRouteTemplate' => $vacationUpdateRouteTemplate])
     </body>
 </html>

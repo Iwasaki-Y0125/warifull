@@ -1,40 +1,48 @@
-export function openDialogById(dialogId) {
-    // 対象が <dialog> で、まだ開いていない時だけ開く。
+// =========================
+// モーダル共通実装ルール
+// =========================
+// 1. このファイルは「開閉の共通処理」だけを持つ（業務データは扱わない）。
+// 2. モーダル固有の初期値セット・フォーム反映は各モーダルJS側で行う。
+// 3. dialogIdは固定文字列で渡し、存在しない場合は即エラーで検知する。
+
+// dialogIdの取得
+function findDialogById(dialogId) {
     const dialog = document.getElementById(dialogId);
-    if (!(dialog instanceof HTMLDialogElement) || dialog.open) {
+    // dialogIdが取得できなければエラーを返す
+    if (!(dialog instanceof HTMLDialogElement)) {
+        throw new Error(`[modal-manager] dialog not found or not <dialog>: ${dialogId}`);
+    }
+
+    return dialog;
+}
+
+// モーダルを開く
+export function openDialogById(dialogId) {
+    const dialog = findDialogById(dialogId);
+    if (dialog.open) {
         return;
     }
 
     dialog.showModal();
 }
 
+// モーダルを閉じる
 export function closeDialogById(dialogId) {
-    // 対象が <dialog> で、開いている時だけ閉じる。
-    const dialog = document.getElementById(dialogId);
-    if (!(dialog instanceof HTMLDialogElement) || !dialog.open) {
+    const dialog = findDialogById(dialogId);
+    if (!dialog.open) {
         return;
     }
 
     dialog.close();
 }
 
-export function initModalManager() {
-    // data属性で指定されたモーダルを、画面共通のルールで開閉する。
-    document.addEventListener('click', (event) => {
-        const target = event.target;
-        if (!(target instanceof Element)) {
-            return;
-        }
+// backdropクリックでモーダルを閉じる
+export function bindBackdropCloseByTarget(dialogId) {
+    const dialog = findDialogById(dialogId);
 
-        const openDialogId = target.closest('[data-modal-open]')?.getAttribute('data-modal-open');
-        if (openDialogId) {
-            openDialogById(openDialogId);
-            return;
-        }
-
-        const closeDialogId = target.closest('[data-modal-close]')?.getAttribute('data-modal-close');
-        if (closeDialogId) {
-            closeDialogById(closeDialogId);
+    dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) {
+            closeDialogById(dialogId);
         }
     });
 }
